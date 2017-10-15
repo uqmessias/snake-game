@@ -4,6 +4,23 @@ $(document).ready(function () {
     window.requestAnimationFrame(draw);
 })
 
+$(document).keydown(function (e) {
+    switch (e.which) {
+        case 37: /* left */
+            snake.direction = 'l'
+            break;
+        case 38:/* up */
+            snake.direction = 'u'
+            break;
+        case 39:/*right */
+            snake.direction = 'r'
+            break;
+        case 40:/*down */
+            snake.direction = 'd'
+            break;
+    }
+})
+
 
 var game = {
     isRunning: true,
@@ -53,7 +70,7 @@ function draw() {
     var ctx = document.getElementById('snake-game').getContext('2d');
     ctx.globalCompositeOperation = 'destination-over';
     ctx.clearRect(0, 0, game.canvasWidth, game.canvasHeight);
-    drawSnake(ctx)
+    drawSnakeAndFood(ctx)
 
     if (game.isRunning) {
         moveSnake()
@@ -74,7 +91,12 @@ function redrawTimeout(timeout) {
     }, timeout);
 }
 
-function drawSnake(ctx) {
+function drawSnakeAndFood(ctx) {
+    if (snake.food) {
+        ctx.fillStyle = 'white'
+        ctx.fillRect(snake.food.x, snake.food.y, snake.width, snake.height)
+    }
+
     for (var i = 0; i < snake.body.length; i++) {
         var snakeBody = snake.body[i]
         ctx.fillStyle = 'white'
