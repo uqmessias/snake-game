@@ -25,7 +25,7 @@ $(document).keydown(function (e) {
 var game = {
     isRunning: true,
     won: null,
-    interval: 500,
+    interval: 100,
     increment: 10,
     canvasWidth: 800,
     canvasHeight: 600,
@@ -67,13 +67,24 @@ var snake = {
 }
 
 function draw() {
-    var ctx = document.getElementById('snake-game').getContext('2d');
-    ctx.globalCompositeOperation = 'destination-over';
-    ctx.clearRect(0, 0, game.canvasWidth, game.canvasHeight);
-    drawSnakeAndFood(ctx)
-
     if (game.isRunning) {
-        moveSnake()
+        var ctx = document.getElementById('snake-game').getContext('2d');
+        ctx.globalCompositeOperation = 'destination-over';
+        ctx.clearRect(0, 0, game.canvasWidth, game.canvasHeight);
+
+        drawSnakeAndFood(ctx)
+
+        if (didCollideWithFood()) {
+            var firstItem = snake.body.shift();
+            snake.body.unshift(snake.food);
+            snake.body.unshift(firstItem);
+            snake.food = createRandomFood()
+            console.log(JSON.stringify(snake.body));
+            moveSnake(true);
+            console.log(JSON.stringify(snake.body));
+        } else {
+            moveSnake()
+        }
 
         if (didCollide()) {
             game.isRunning = false;
@@ -105,9 +116,9 @@ function drawSnakeAndFood(ctx) {
 }
 
 function didCollideWithFood() {
-    var last = snake.body[snake.body.length - 1];
+    var head = snake.body[0];
     var food = snake.food;
-    return last.x === food.x && last.y === food.y;
+    return head.x === food.x && head.y === food.y;
 }
 
 function createRandomFood() {
@@ -129,7 +140,7 @@ function createRandomFood() {
         }
 
         if (addItem) {
-            newItems.push({ x: item.x, y: item.y });
+            newItems.push({ x: item.x * snake.width, y: item.y * snake.height });
         }
     }
 
@@ -143,7 +154,7 @@ function createRandomFood() {
 }
 
 function didCollide() {
-    var head = snake.body[snake.body.length - 1];
+    var head = snake.body[0];
 
     if (head.x < 0 || head.y < 0 ||
         head.x >= game.canvasWidth || head.y >= game.canvasHeight) {
@@ -162,7 +173,7 @@ function didCollide() {
     return false;
 }
 
-function moveSnake() {
+function moveSnake(justTheFirstItem) {
     var move = true;
     var increment = { x: 0, y: 0 };
 
@@ -185,19 +196,21 @@ function moveSnake() {
     }
 
     if (move) {
-        if (snake.body.length > 1) {
-            var last = snake.body[snake.body.length - 1];
-            for (var i = snake.body.length - 2; i >= 0; i--) {
-                var snakeItem = snake.body[i]
-                var sX = snakeItem.x, sY = snakeItem.y;
-                snakeItem.x = last.x;
-                snakeItem.y = last.y;
-                last = { x: sX, y: sY }
+        if (!justTheFirstItem) {
+            if (snake.body.length > 1) {
+                var head = snake.body[0];
+                for (var i = 1; i < snake.body.length; i++) {
+                    var snakeItem = snake.body[i]
+                    var sX = snakeItem.x, sY = snakeItem.y;
+                    snakeItem.x = head.x;
+                    snakeItem.y = head.y;
+                    head = { x: sX, y: sY }
+                }
             }
         }
 
-        var lastItem = snake.body[snake.body.length - 1];
-        lastItem.x += increment.x;
-        lastItem.y += increment.y;
+        var headItem = snake.body[0];
+        headItem.x += increment.x;
+        headItem.y += increment.y;
     }
 }
