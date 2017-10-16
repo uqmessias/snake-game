@@ -7,16 +7,29 @@ $(document).ready(function () {
 $(document).keydown(function (e) {
     switch (e.which) {
         case 37: /* left */
-            snake.direction = 'l'
+            if (snake.direction !== 'r') {
+                snake.direction = 'l'
+            }
             break;
         case 38:/* up */
-            snake.direction = 'u'
+            if (snake.direction !== 'd') {
+                snake.direction = 'u'
+            }
             break;
         case 39:/*right */
-            snake.direction = 'r'
+            if (snake.direction !== 'l') {
+                snake.direction = 'r'
+            }
             break;
         case 40:/*down */
-            snake.direction = 'd'
+            if (snake.direction !== 'u') {
+                snake.direction = 'd'
+            }
+            break;
+        case 32: /* space */
+            window.requestAnimationFrame(draw);
+            game.isRunning = !game.isRunning;
+            game.won = null;
             break;
     }
 })
