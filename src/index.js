@@ -117,13 +117,13 @@ function redrawTimeout(timeout) {
 
 function drawSnakeAndFood(ctx) {
     if (snake.food) {
-        ctx.fillStyle = 'white'
+        ctx.fillStyle = 'red'
         ctx.fillRect(snake.food.x, snake.food.y, snake.width, snake.height)
     }
 
     for (var i = 0; i < snake.body.length; i++) {
-        var snakeBody = snake.body[i]
-        ctx.fillStyle = 'white'
+        var snakeBody = snake.body[i];
+        ctx.fillStyle = i === 0 ? 'yellow' : 'white';
         ctx.fillRect(snakeBody.x, snakeBody.y, snake.width, snake.height)
     }
 }
