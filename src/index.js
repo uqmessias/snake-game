@@ -30,8 +30,8 @@ $(document).keydown(function (e) {
 var game = {
     isRunning: true,
     won: null,
-    interval: 1,
-    increment: 1,
+    interval: 10,
+    increment: 10,
     diameter: 10,
     canvasWidth: 800,
     canvasHeight: 600,
@@ -80,10 +80,6 @@ function update() {
         snake.food = createRandomFood()
         console.log(JSON.stringify(snake.body));
         moveSnake(true);
-        console.log(JSON.stringify(snake.body));
-        console.log('-------')
-        console.log(JSON.stringify(snake.body));
-        moveSnake();
         console.log(JSON.stringify(snake.body));
     } else {
         moveSnake()
@@ -201,10 +197,14 @@ function createRandomFood() {
 function didCollide() {
     var head = snake.body[0];
 
-    if (head.x < 0 || head.y < 0 ||
+    if (head.x <= 0 || head.y <= 0 ||
         head.x >= game.canvasWidth || head.y >= game.canvasHeight) {
         console.warn('out of screen');
-        return true;
+        //return true;
+        if (head.x < 0) heax.x = game.canvasWidth - snake.width;
+        if (head.y < 0) head.y = game.canvasHeight - snake.height;
+        if (head.x > game.canvasWidth) head.x = snake.width;
+        if (head.y > game.canvasHeight) head.y = snake.height;
     }
 
     if (snake.body.length > 3) {
