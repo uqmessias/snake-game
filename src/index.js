@@ -7,24 +7,16 @@ $(document).ready(function () {
 $(document).keydown(function (e) {
     switch (e.which) {
         case 37: /* left */
-            if (snake.direction !== 'r') {
-                snake.direction = 'l'
-            }
+            snake.asyncDirections.push('l')
             break;
         case 38:/* up */
-            if (snake.direction !== 'd') {
-                snake.direction = 'u'
-            }
+            snake.asyncDirections.push('u')
             break;
         case 39:/*right */
-            if (snake.direction !== 'l') {
-                snake.direction = 'r'
-            }
+            snake.asyncDirections.push('r')
             break;
         case 40:/*down */
-            if (snake.direction !== 'u') {
-                snake.direction = 'd'
-            }
+            snake.asyncDirections.push('d')
             break;
         case 32: /* space */
             window.requestAnimationFrame(draw);
@@ -38,8 +30,9 @@ $(document).keydown(function (e) {
 var game = {
     isRunning: true,
     won: null,
-    interval: 100,
-    increment: 10,
+    interval: 1,
+    increment: 1,
+    diameter: 10,
     canvasWidth: 800,
     canvasHeight: 600,
     possiblePositions: [],
@@ -66,17 +59,68 @@ var setFood = function () {
     } else {
         game.isRunning = false;
         game.won = true;
-        alert('ganhou');
     }
 }
 
 var snake = {
     direction: 'r', // r, l, u, d
-    width: game.increment, height: game.increment,
+    asyncDirections: [],
+    width: game.diameter, height: game.diameter,
     food: {},
     body: [
         { x: 0, y: 0 },
     ]
+}
+
+function update() {
+    if (didCollideWithFood()) {
+        var firstItem = snake.body.shift();
+        snake.body.unshift(snake.food);
+        snake.body.unshift(firstItem);
+        snake.food = createRandomFood()
+        console.log(JSON.stringify(snake.body));
+        moveSnake(true);
+        console.log(JSON.stringify(snake.body));
+        console.log('-------')
+        console.log(JSON.stringify(snake.body));
+        moveSnake();
+        console.log(JSON.stringify(snake.body));
+    } else {
+        moveSnake()
+    }
+
+    if (didCollide()) {
+        game.isRunning = false;
+        game.won = false;
+        return false;
+    }
+
+    return true;
+}
+
+function changeDirection() {
+    if (snake.body[0].x % game.diameter === 0 && snake.body[0].y % game.diameter === 0) {
+        var lastDirection = snake.direction, upDown = ['u', 'd'], leftRight = ['l', 'r'];
+        while (snake.asyncDirections.length > 0) {
+            var newDirection = snake.asyncDirections.shift();
+
+            // last and new are equal
+            if (newDirection === lastDirection) {
+                game.increment++;
+            } else if (
+                // last and new are opposite
+                (upDown.indexOf(newDirection) !== -1 && upDown.indexOf(lastDirection) !== -1) ||
+                (leftRight.indexOf(newDirection) !== -1 && leftRight.indexOf(lastDirection) !== -1)) {
+                if (game.increment > 0) {
+                    game.increment--;
+                }
+            } else {
+                snake.direction = newDirection;
+            }
+
+            lastDirection = newDirection;
+        }
+    }
 }
 
 function draw() {
@@ -85,27 +129,15 @@ function draw() {
         ctx.globalCompositeOperation = 'destination-over';
         ctx.clearRect(0, 0, game.canvasWidth, game.canvasHeight);
 
-        drawSnakeAndFood(ctx)
+        drawSnakeAndFood(ctx);
 
-        if (didCollideWithFood()) {
-            var firstItem = snake.body.shift();
-            snake.body.unshift(snake.food);
-            snake.body.unshift(firstItem);
-            snake.food = createRandomFood()
-            console.log(JSON.stringify(snake.body));
-            moveSnake(true);
-            console.log(JSON.stringify(snake.body));
-        } else {
-            moveSnake()
-        }
+        changeDirection();
 
-        if (didCollide()) {
-            game.isRunning = false;
-            game.won = false;
-            alert('perdeu');
-        } else {
-            redrawTimeout(game.interval);
-        }
+        update();
+
+        redrawTimeout(game.interval);
+    } else if (game.won !== null) {
+        alert(game.won ? 'ganhou' : 'perdeu');
     }
 }
 
@@ -141,7 +173,7 @@ function createRandomFood() {
         var item = game.possiblePositions[i];
         var addItem = true;
 
-        for (var s = 0; s < snake.body; s++) {
+        for (var s = 0; s < snake.body.length; s++) {
             var snakeItem = snake.body[s],
                 sX = snakeItem.x / snake.width,
                 sY = snakeItem.y / snake.height;
@@ -171,13 +203,16 @@ function didCollide() {
 
     if (head.x < 0 || head.y < 0 ||
         head.x >= game.canvasWidth || head.y >= game.canvasHeight) {
+        console.warn('out of screen');
         return true;
     }
 
     if (snake.body.length > 3) {
-        for (var i = snake.body.length - 2; i >= 0; i++) {
+        for (var i = 2; i < snake.body.length; i++) {
             var item = snake.body[i];
             if (head.x === item.x && head.y === item.y) {
+                console.warn('collided with itself');
+                console.log(`i: ${i} -> head: ${JSON.stringify(head)}\nitem: ${JSON.stringify(item)}\nsnake: ${JSON.stringify(snake)}\ngame: ${JSON.stringify(game)}`)
                 return true;
             }
         }
@@ -189,19 +224,20 @@ function didCollide() {
 function moveSnake(justTheFirstItem) {
     var move = true;
     var increment = { x: 0, y: 0 };
+    var incrementer = justTheFirstItem ? game.diameter : game.increment;
 
     switch (snake.direction) {
         case 'r':
-            increment.x = game.increment;
+            increment.x = incrementer;
             break;
         case 'l':
-            increment.x = game.increment * -1;
+            increment.x = incrementer * -1;
             break;
         case 'u':
-            increment.y = game.increment * -1;
+            increment.y = incrementer * -1;
             break;
         case 'd':
-            increment.y = game.increment;
+            increment.y = incrementer;
             break;
         default:
             move = false;
